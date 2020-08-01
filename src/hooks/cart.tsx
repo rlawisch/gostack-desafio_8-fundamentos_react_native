@@ -30,23 +30,83 @@ const CartProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     async function loadProducts(): Promise<void> {
-      // TODO LOAD ITEMS FROM ASYNC STORAGE
+      const storedProducts = await AsyncStorage.getItem('@Desafio8:Products');
+      if (storedProducts) setProducts(JSON.parse(storedProducts));
     }
 
     loadProducts();
   }, []);
 
-  const addToCart = useCallback(async product => {
-    // TODO ADD A NEW ITEM TO THE CART
-  }, []);
+  const addToCart = useCallback(
+    async product => {
+      const foundProduct = products.find(
+        filteredProduct => filteredProduct.id === product.id,
+      );
+      let modifiedProducts;
 
-  const increment = useCallback(async id => {
-    // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+      if (foundProduct) {
+        modifiedProducts = products.map(prod =>
+          prod.id === product.id
+            ? { ...product, quantity: prod.quantity + 1 }
+            : prod,
+        );
+      } else modifiedProducts = [...products, { ...product, quantity: 1 }];
 
-  const decrement = useCallback(async id => {
-    // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+      setProducts(modifiedProducts);
+
+      await AsyncStorage.setItem(
+        '@Desafio8:Products',
+        JSON.stringify(modifiedProducts),
+      );
+    },
+    [products],
+  );
+
+  const increment = useCallback(
+    async id => {
+      const foundProduct = products.find(
+        filteredProduct => filteredProduct.id === id,
+      );
+      if (!foundProduct) return;
+
+      const modifiedProducts = products.map(filteredProduct =>
+        filteredProduct.id === id
+          ? { ...foundProduct, quantity: foundProduct.quantity + 1 }
+          : filteredProduct,
+      );
+
+      setProducts(modifiedProducts);
+
+      await AsyncStorage.setItem(
+        '@Desafio8:Products',
+        JSON.stringify(modifiedProducts),
+      );
+    },
+    [products],
+  );
+
+  const decrement = useCallback(
+    async id => {
+      const foundProduct = products.find(
+        filteredProduct => filteredProduct.id === id,
+      );
+      if (!foundProduct || foundProduct.quantity === 0) return;
+
+      const modifiedProducts = products.map(filteredProduct =>
+        filteredProduct.id === id
+          ? { ...foundProduct, quantity: foundProduct.quantity - 1 }
+          : filteredProduct,
+      );
+
+      setProducts(modifiedProducts);
+
+      await AsyncStorage.setItem(
+        '@Desafio8:Products',
+        JSON.stringify(products),
+      );
+    },
+    [products],
+  );
 
   const value = React.useMemo(
     () => ({ addToCart, increment, decrement, products }),
